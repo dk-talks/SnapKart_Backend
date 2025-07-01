@@ -1,0 +1,78 @@
+version: "3.8"
+
+services:
+  snapkarteurekaserver:
+    container_name: eureka-server
+    build: ./snapkart_eurekaserver
+    ports:
+      - "8761:8761"
+    networks:
+      - snapkart-network
+
+  snapkartuserservice:
+    container_name: user-service
+    build: ./snapkart_userservice
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://snapkarteurekaserver:8761/eureka/
+      - SPRING_APPLICATION_NAME=SnapKartUserService
+      - SPRING_DATASOURCE_URL=${MYSQL_USER_DATABASE_URL}
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER_DATABASE_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_USER_DATABASE_PASSWORD}
+    depends_on:
+      - snapkarteurekaserver
+    networks:
+      - snapkart-network
+
+  snapkartproductservice:
+    container_name: product-service
+    build: ./snapkart_productservice
+    ports:
+      - "8082:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://snapkarteurekaserver:8761/eureka/
+      - SPRING_APPLICATION_NAME=SnapKartProductService
+      - SPRING_DATA_MONGODB_URI=${MONGO_DB_DATABASE_URL}
+    depends_on:
+      - snapkarteurekaserver
+    networks:
+      - snapkart-network
+
+  snapkartpaymentservice:
+    container_name: payment-service
+    build: ./snapkart_paymentservice
+    ports:
+      - "8081:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://snapkarteurekaserver:8761/eureka/
+      - SPRING_APPLICATION_NAME=SnapKartPaymentService
+      - SPRING_DATASOURCE_URL=${MYSQL_PAYMENT_DATABASE_URL}
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_PAYMENT_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PAYMENT_PASSWORD}
+      - RAZORPAY_KEY=${RAZORPAY_KEY}
+      - RAZORPAY_SECRET=${RAZORPAY_SECRET}
+    depends_on:
+      - snapkarteurekaserver
+    networks:
+      - snapkart-network
+  
+  snapkartorderservice:
+    container_name: order-service
+    build: ./snapkart_orderservice
+    ports:
+      - "8083:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://snapkarteurekaserver:8761/eureka/
+      - SPRING_APPLICATION_NAME=SnapKartOrderService
+      - SPRING_DATASOURCE_URL=${MYSQL_ORDER_DATABASE_URL}
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_ORDER_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ORDER_PASSWORD}
+    depends_on:
+      - snapkarteurekaserver
+    networks:
+      - snapkart-network
+
+networks:
+  snapkart-network:
+    driver: bridge
